@@ -1,4 +1,5 @@
 #include "dsv.h"
+#include "my_cudamemset.cuh"
 
 float dsv(cublasHandle_t handle, float *d_A, int Nrows, int Ncols, float *(&d_Um), float *(&d_Vm), float epsilon){
 	float *d_aat;					gpuErrchk(cudaMalloc(&d_aat, Nrows*Nrows*sizeof(float)));
@@ -9,7 +10,7 @@ float dsv(cublasHandle_t handle, float *d_A, int Nrows, int Ncols, float *(&d_Um
 	cublasSgemm(handle, CUBLAS_OP_N, CUBLAS_OP_T, Nrows, Nrows, Ncols, &al, d_A, Nrows, d_A, Nrows, &bet, d_aat, Nrows);
 	cublasSgemm(handle, CUBLAS_OP_T, CUBLAS_OP_N, Ncols, Ncols, Nrows, &al, d_A, Nrows, d_A, Nrows, &bet, d_ata, Ncols);
 
-	int mv = Nrows > Ncols ? Nrows : Ncols;
+	/*int mv = Nrows > Ncols ? Nrows : Ncols;
 	float *h_ones_max = (float *)malloc(mv*sizeof(float));
 	for (int i = 0; i < mv; i++) h_ones_max[i] = 1.0f;
 
@@ -20,13 +21,14 @@ float dsv(cublasHandle_t handle, float *d_A, int Nrows, int Ncols, float *(&d_Um
 	else{
 		cublasSafeCall(cublasSetVector(Ncols, sizeof(float), h_ones_max, 1, d_Vm, 1));
 		cublasSafeCall(cublasScopy(handle, Nrows, d_Vm, 1, d_Um, 1));
-	}
+	}*/
+	my_cudamemset(d_Um, Nrows, 1.0f);
+	my_cudamemset(d_Vm, Ncols, 1.0f);
 
 	power_m(handle, d_aat, Nrows, epsilon, STARTING_EIGENVALUE, d_Um);
 	float lambda = power_m(handle, d_ata, Ncols, epsilon, STARTING_EIGENVALUE, d_Vm);
 	cudaFree(d_aat);
 	cudaFree(d_ata);
-	free(h_ones_max);
 	return sqrt(lambda);
 }
 

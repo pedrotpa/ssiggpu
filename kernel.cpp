@@ -182,13 +182,22 @@ void speedup(int step, int n_step, int ncomp, int n_samples) {
 }
 
 int main(int argc, char *argv[]){
-
-	speedup(200, 20, 4, 10);
+	int step, n_step, ncomp, n_samples;
+	sscanf(argv[1], "%d", &step);
+	sscanf(argv[2], "%d", &n_step);
+	sscanf(argv[3], "%d", &ncomp);
+	sscanf(argv[4], "%d", &n_samples);
+	std::cout << "step: " << step << "\tn_step: " << n_step << "\tncomp: " << ncomp << "\tn_samples: " << n_samples << std::endl;
+	//ex speedup(200, 20, 4, 10);
+	speedup(step,n_step,ncomp, n_samples);
+	
 	return 0;
+
+
 	int n;
 	int comp_init;
-	int ncomp;
-	int n_samples;
+	//int ncomp;
+	//int n_samples;
 	/*sscanf(argv[1], "%d", &n);
 	sscanf(argv[2], "%d", &ncomp);
 	sscanf(argv[3], "%d", &n_samples);
