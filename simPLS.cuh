@@ -6,17 +6,26 @@
 
 #include "cublas_v2.h"
 
+#include <opencv2/opencv.hpp>
+
 #include "errchk.h"
 #include "dsv.h"
 #include "my_cudamemset.cuh"
 
+
 #define epsilion_e 0.0000001
 
 inline void simPLS(const int n, const int dx, const int dy, const float *X0, const float *Y0, const int ncomp, float *(&Xloadings), float *(&Yloadings));
+inline void simPLS(const cv::Mat X0, const cv::Mat Y0, const int ncomp, cv::Mat &Xloadings, cv::Mat &Yloadings);
+
 inline void simPLS(const int n, const int dx, const int dy, const float *X0, const float *Y0, const int ncomp, float *(&Xloadings), float *(&Yloadings),
 	float *(&Xscores), float *(&Yscores));
+inline void simPLS(const cv::Mat X0, const cv::Mat Y0, const int ncomp, cv::Mat &Xloadings, cv::Mat &Yloadings, cv::Mat &Xscores, cv::Mat &Yscores);
+
 inline void simPLS(const int n, const int dx, const int dy, const float *X0, const float *Y0, const int ncomp, float *(&Xloadings), float *(&Yloadings),
 	float *(&Xscores), float *(&Yscores), float *(&Weights), float *(&beta));
+inline void simPLS(const cv::Mat X0, const cv::Mat Y0, const int ncomp, cv::Mat &Xloadings, cv::Mat &Yloadings, cv::Mat &Xscores, cv::Mat &Yscores,
+	cv::Mat &Weights, cv::Mat &beta);
 
 void simPLS_f(const int n, const int dx, const int dy, const float *h_X0, const float *h_Y0, const int ncomp, float *(&h_Xloadings), float *(&h_Yloadings),
 	float *(&h_Xscores), float *(&h_Yscores), float *(&h_Weights), float *(&h_beta), const int nargout);
@@ -231,14 +240,56 @@ inline void simPLS(const int n, const int dx, const int dy, const float *X0, con
 	float *null_ptr = NULL;
 	simPLS_f(n, dx, dy, X0, Y0, ncomp, Xloadings, Yloadings, null_ptr, null_ptr, null_ptr, null_ptr, 2);
 }
+inline void simPLS(const cv::Mat X0, const cv::Mat Y0, const int ncomp, cv::Mat &Xloadings, cv::Mat &Yloadings){
+	int n = X0.rows;
+	int dx = X0.cols;
+	int dy = Y0.cols;
+	float *ptr_Xloadings, *ptr_Yloadings;
+
+	simPLS(n, dx, dy, (float *)X0.data, (float *)Y0.data, ncomp, ptr_Xloadings, ptr_Yloadings);
+
+	Xloadings = cv::Mat(dx, ncomp, CV_32FC1, ptr_Xloadings);
+	Yloadings = cv::Mat(dy, ncomp, CV_32FC1, ptr_Yloadings);
+}
+
 inline void simPLS(const int n, const int dx, const int dy, const float *X0, const float *Y0, const int ncomp, float *(&Xloadings), float *(&Yloadings),
 	float *(&Xscores), float *(&Yscores)){
 	float *null_ptr = NULL;
 	simPLS_f(n, dx, dy, X0, Y0, ncomp, Xloadings, Yloadings, Xscores, Yscores, null_ptr, null_ptr, 4);
 }
+inline void simPLS(const cv::Mat X0, const cv::Mat Y0, const int ncomp, cv::Mat &Xloadings, cv::Mat &Yloadings, cv::Mat &Xscores, cv::Mat &Yscores){
+	int n = X0.rows;
+	int dx = X0.cols;
+	int dy = Y0.cols;
+	float *ptr_Xloadings, *ptr_Yloadings, *ptr_Xscores, *ptr_Yscores;
+
+	simPLS(n, dx, dy, (float *)X0.data, (float *)Y0.data, ncomp, ptr_Xloadings, ptr_Yloadings, ptr_Xscores, ptr_Yscores);
+
+	Xloadings = cv::Mat(dx, ncomp, CV_32FC1, ptr_Xloadings);
+	Yloadings = cv::Mat(dy, ncomp, CV_32FC1, ptr_Yloadings);
+	Xscores = cv::Mat(n, ncomp, CV_32FC1, ptr_Xscores);
+	Yscores = cv::Mat(n, ncomp, CV_32FC1, ptr_Yscores);
+}
+
 inline void simPLS(const int n, const int dx, const int dy, const float *X0, const float *Y0, const int ncomp, float *(&Xloadings), float *(&Yloadings),
 	float *(&Xscores), float *(&Yscores), float *(&Weights), float *(&beta)){
 	simPLS_f(n, dx, dy, X0, Y0, ncomp, Xloadings, Yloadings, Xscores, Yscores, Weights, beta, 6);
+}
+inline void simPLS(const cv::Mat X0, const cv::Mat Y0, const int ncomp, cv::Mat &Xloadings, cv::Mat &Yloadings, cv::Mat &Xscores, cv::Mat &Yscores,
+	cv::Mat &Weights, cv::Mat &beta){
+	int n = X0.rows;
+	int dx = X0.cols;
+	int dy = Y0.cols;
+	float *ptr_Xloadings, *ptr_Yloadings, *ptr_Xscores, *ptr_Yscores, *ptr_Weights, *ptr_beta;
+
+	simPLS(n, dx, dy, (float *)X0.data, (float *)Y0.data, ncomp, ptr_Xloadings, ptr_Yloadings, ptr_Xscores, ptr_Yscores, ptr_Weights, ptr_beta);
+
+	Xloadings = cv::Mat(dx, ncomp, CV_32FC1, ptr_Xloadings);
+	Yloadings = cv::Mat(dy, ncomp, CV_32FC1, ptr_Yloadings);
+	Xscores = cv::Mat(n, ncomp, CV_32FC1, ptr_Xscores);
+	Yscores = cv::Mat(n, ncomp, CV_32FC1, ptr_Yscores);
+	Weights = cv::Mat(dx, ncomp, CV_32FC1, ptr_Weights);
+	beta = cv::Mat(dx + 1, dy, CV_32FC1, ptr_beta);
 }
 
 
